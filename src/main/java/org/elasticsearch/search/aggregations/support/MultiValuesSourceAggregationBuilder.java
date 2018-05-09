@@ -72,8 +72,7 @@ public abstract class MultiValuesSourceAggregationBuilder<VS extends ValuesSourc
       final ValuesSourceType valuesSourceType, final ValueType targetValueType)
       throws IOException {
     super(in);
-    assert false
-        == serializeTargetValueType() : "Wrong read constructor called for subclass that provides its targetValueType";
+    assert !serializeTargetValueType() : "Wrong read constructor called for subclass that provides its targetValueType";
     this.valuesSourceType = valuesSourceType;
     this.targetValueType = targetValueType;
     read(in);
