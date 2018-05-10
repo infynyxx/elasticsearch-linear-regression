@@ -28,7 +28,6 @@ import java.util.Map;
 import org.elasticsearch.common.ParseField;
 import org.elasticsearch.common.ParsingException;
 import org.elasticsearch.common.xcontent.XContentParser;
-import org.elasticsearch.index.query.QueryParseContext;
 import org.elasticsearch.script.Script;
 import org.elasticsearch.search.aggregations.AggregationBuilder.CommonFields;
 import org.elasticsearch.search.aggregations.Aggregator;
@@ -36,59 +35,27 @@ import org.elasticsearch.search.aggregations.Aggregator;
 public abstract class MultiValuesSourceParser<VS extends ValuesSource> implements
     Aggregator.Parser {
 
-  public abstract static class AnyValuesSourceParser extends MultiValuesSourceParser<ValuesSource> {
-
-    protected AnyValuesSourceParser(boolean formattable) {
-      super(formattable, ValuesSourceType.ANY, null);
-    }
-  }
-
-  public abstract static class NumericValuesSourceParser extends
-      MultiValuesSourceParser<ValuesSource.Numeric> {
-
-    protected NumericValuesSourceParser(boolean formattable) {
-      super(formattable, ValuesSourceType.NUMERIC, ValueType.NUMERIC);
-    }
-  }
-
-  public abstract static class BytesValuesSourceParser extends
-      MultiValuesSourceParser<ValuesSource.Bytes> {
-
-    protected BytesValuesSourceParser(boolean formattable) {
-      super(formattable, ValuesSourceType.BYTES, ValueType.STRING);
-    }
-  }
-
-  public abstract static class GeoPointValuesSourceParser extends
-      MultiValuesSourceParser<ValuesSource.GeoPoint> {
-
-    protected GeoPointValuesSourceParser(boolean formattable) {
-      super(formattable, ValuesSourceType.GEOPOINT, ValueType.GEOPOINT);
-    }
-  }
-
   private boolean formattable = false;
   private ValuesSourceType valuesSourceType = null;
   private ValueType targetValueType = null;
 
-  private MultiValuesSourceParser(boolean formattable, ValuesSourceType valuesSourceType,
-      ValueType targetValueType) {
+  private MultiValuesSourceParser(final boolean formattable,
+      final ValuesSourceType valuesSourceType, final ValueType targetValueType) {
     this.valuesSourceType = valuesSourceType;
     this.targetValueType = targetValueType;
     this.formattable = formattable;
   }
 
   @Override
-  public final MultiValuesSourceAggregationBuilder<VS, ?> parse(String aggregationName,
-      QueryParseContext context)
+  public final MultiValuesSourceAggregationBuilder<VS, ?> parse(
+      final String aggregationName, final XContentParser parser)
       throws IOException {
 
-    XContentParser parser = context.parser();
     List<String> fields = null;
-    ValueType valueType = null;
+    final ValueType valueType = null;
     String format = null;
     Map<String, Object> missingMap = null;
-    Map<ParseField, Object> otherOptions = new HashMap<>();
+    final Map<ParseField, Object> otherOptions = new HashMap<>();
     XContentParser.Token token;
     String currentFieldName = null;
     while ((token = parser.nextToken()) != XContentParser.Token.END_OBJECT) {
@@ -97,7 +64,7 @@ public abstract class MultiValuesSourceParser<VS extends ValuesSource> implement
       } else if (token == XContentParser.Token.VALUE_STRING) {
         if (CommonFields.FIELDS.match(currentFieldName)) {
           fields = Collections.singletonList(parser.text());
-        } else if (formattable && CommonFields.FORMAT.match(currentFieldName)) {
+        } else if (this.formattable && CommonFields.FORMAT.match(currentFieldName)) {
           format = parser.text();
         } else if (CommonFields.VALUE_TYPE.match(currentFieldName)) {
           throw new ParsingException(parser.getTokenLocation(),
@@ -155,7 +122,7 @@ public abstract class MultiValuesSourceParser<VS extends ValuesSource> implement
       }
     }
 
-    MultiValuesSourceAggregationBuilder<VS, ?> factory = createFactory(aggregationName,
+    final MultiValuesSourceAggregationBuilder<VS, ?> factory = createFactory(aggregationName,
         this.valuesSourceType, this.targetValueType,
         otherOptions);
     if (fields != null) {
@@ -174,7 +141,7 @@ public abstract class MultiValuesSourceParser<VS extends ValuesSource> implement
   }
 
   private void parseMissingAndAdd(final String aggregationName, final String currentFieldName,
-      XContentParser parser, final Map<String, Object> missing) throws IOException {
+      final XContentParser parser, final Map<String, Object> missing) throws IOException {
     XContentParser.Token token = parser.currentToken();
     if (token == null) {
       token = parser.nextToken();
@@ -231,4 +198,35 @@ public abstract class MultiValuesSourceParser<VS extends ValuesSource> implement
   protected abstract boolean token(String aggregationName, String currentFieldName,
       XContentParser.Token token, XContentParser parser,
       Map<ParseField, Object> otherOptions) throws IOException;
+
+  public abstract static class AnyValuesSourceParser extends MultiValuesSourceParser<ValuesSource> {
+
+    protected AnyValuesSourceParser(final boolean formattable) {
+      super(formattable, ValuesSourceType.ANY, null);
+    }
+  }
+
+  public abstract static class NumericValuesSourceParser extends
+      MultiValuesSourceParser<ValuesSource.Numeric> {
+
+    protected NumericValuesSourceParser(final boolean formattable) {
+      super(formattable, ValuesSourceType.NUMERIC, ValueType.NUMERIC);
+    }
+  }
+
+  public abstract static class BytesValuesSourceParser extends
+      MultiValuesSourceParser<ValuesSource.Bytes> {
+
+    protected BytesValuesSourceParser(final boolean formattable) {
+      super(formattable, ValuesSourceType.BYTES, ValueType.STRING);
+    }
+  }
+
+  public abstract static class GeoPointValuesSourceParser extends
+      MultiValuesSourceParser<ValuesSource.GeoPoint> {
+
+    protected GeoPointValuesSourceParser(final boolean formattable) {
+      super(formattable, ValuesSourceType.GEOPOINT, ValueType.GEOPOINT);
+    }
+  }
 }
